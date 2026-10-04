@@ -19,7 +19,8 @@ import javax.inject.Singleton
 class ExternalRecordingImporter @Inject constructor(
     @ApplicationContext private val context: Context,
     private val recordingRepository: RecordingRepository,
-    private val contactLookupHelper: ContactLookupHelper
+    private val contactLookupHelper: ContactLookupHelper,
+    private val transcriptionCoordinator: javax.inject.Provider<com.example.callscribe.transcription.TranscriptionCoordinator>
 ) {
     suspend fun importFromUri(uri: Uri): Result<CallRecording> = withContext(Dispatchers.IO) {
         try {
@@ -52,6 +53,7 @@ class ExternalRecordingImporter @Inject constructor(
             )
 
             val id = recordingRepository.saveRecording(recording)
+            transcriptionCoordinator.get().processRecordingAsync(id)
             Result.success(recording.copy(id = id))
         } catch (e: Exception) {
             Result.failure(e)

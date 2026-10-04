@@ -43,6 +43,9 @@ class CallRecordingService : Service() {
     @Inject
     lateinit var audioAlertHelper: AudioAlertHelper
 
+    @Inject
+    lateinit var transcriptionCoordinator: com.example.callscribe.transcription.TranscriptionCoordinator
+
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
     private var tickerJob: Job? = null
     private var currentPhoneNumber: String = "Unknown"
@@ -138,7 +141,8 @@ class CallRecordingService : Service() {
                     fileSize = recordedFile.length(),
                     sourceLanguage = "en"
                 )
-                recordingRepository.saveRecording(callRecording)
+                val recordingId = recordingRepository.saveRecording(callRecording)
+                transcriptionCoordinator.processRecordingAsync(recordingId)
             }
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
